@@ -12,45 +12,47 @@ class MyContainer extends StatelessWidget {
   //
   const MyContainer({
     super.key,
-    required this.headerColor,
-    required this.bodyColor,
-    required this.headerPadding,
-    required this.headerContent,
     required this.flex,
+    required this.bodyColor,
+    required this.headerColor,
     required this.bodyPadding,
     required this.bodyContent,
+    required this.headerPadding,
+    required this.headerContent,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height,
-      color: headerColor,
-      child: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: headerPadding,
-              child: headerContent,
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.of(context).size.height,
+        color: headerColor,
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: headerPadding,
+                child: headerContent,
+              ),
             ),
-          ),
-          Expanded(
-            flex: flex,
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                color: bodyColor,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(17),
+            Expanded(
+              flex: flex,
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  color: bodyColor,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(17),
+                  ),
+                ),
+                child: Padding(
+                  padding: bodyPadding,
+                  child: bodyContent,
                 ),
               ),
-              child: Padding(
-                padding: bodyPadding,
-                child: bodyContent,
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pill_reminder/core/app_colors.dart';
-import 'package:pill_reminder/core/app_text_style.dart';
+import 'package:pill_reminder/core/ui/app_colors.dart';
+import 'package:pill_reminder/core/ui/app_text_style.dart';
 
 class HomeCard extends StatelessWidget {
   final String cardTitle;

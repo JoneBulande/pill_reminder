@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pill_reminder/core/app_colors.dart';
-import 'package:pill_reminder/core/app_text_style.dart';
+import 'package:pill_reminder/core/ui/app_colors.dart';
+import 'package:pill_reminder/core/ui/app_text_style.dart';
 
 class MyTextField extends StatelessWidget {
   final String label;
@@ -24,7 +24,13 @@ class MyTextField extends StatelessWidget {
       children: [
         Text(label, style: AppTextStyles.label),
         const SizedBox(height: 7),
-        TextField(
+        TextFormField(
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Digite um valor válido';
+            }
+            return null;
+          },
           obscureText: isObscure!,
           controller: controller,
           decoration: InputDecoration(
@@ -33,6 +39,7 @@ class MyTextField extends StatelessWidget {
                 borderSide: BorderSide(color: AppColors.gray400)),
             hintStyle: AppTextStyles.input,
             hintText: hintText ?? '',
+            //suffixIcon: isObscure ? Icon(Icons.visibility_outlined, color: AppColors.blueBase) : null,
             // isObscure ?? suffixIcon: Icon(Icons.visibility_outlined, color: AppColors.blueBase),
           ),
         ),

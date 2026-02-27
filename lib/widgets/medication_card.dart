@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:pill_reminder/core/app_colors.dart';
-import 'package:pill_reminder/core/app_text_style.dart';
+import 'package:pill_reminder/core/ui/app_colors.dart';
+import 'package:pill_reminder/core/ui/app_text_style.dart';
 
 class MedicationCard extends StatelessWidget {
   //
   final String time;
   final String repeat;
   final String medicationName;
+  final Function() onTap;
   //
   const MedicationCard({
     super.key,
     required this.time,
-    required this.medicationName,
+    required this.onTap,
     required this.repeat,
+    required this.medicationName,
   });
 
   @override
@@ -33,34 +35,37 @@ class MedicationCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(medicationName, style: AppTextStyles.subHeading),
-                    const Icon(Icons.delete,
-                        color: AppColors.redLight, size: 17),
+                    IconButton(
+                      onPressed: onTap,
+                      icon: const Icon(
+                        Icons.delete,
+                        color: AppColors.redLight,
+                        size: 17,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 17),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextButton.icon(
-                      style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
-                        AppColors.gray600,
-                      )),
-                      onPressed: () {},
+                    Chip(
                       label: Text(time, style: AppTextStyles.tag),
-                      icon: const Icon(Icons.access_time,
+                      backgroundColor: AppColors.gray600,
+                      shape: const StadiumBorder(
+                        side: BorderSide(style: BorderStyle.none),
+                      ),
+                      avatar: const Icon(Icons.access_time,
                           size: 18, color: AppColors.gray400),
                     ),
-                    const SizedBox(width: 7),
-                    TextButton.icon(
-                      style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
-                        AppColors.gray600,
-                      )),
-                      onPressed: () {},
+                    Chip(
                       label: Text('A cada $repeat', style: AppTextStyles.tag),
-                      icon: const Icon(Icons.repeat_rounded,
+                      backgroundColor: AppColors.gray600,
+                      shape: const StadiumBorder(
+                        side: BorderSide(style: BorderStyle.none),
+                      ),
+                      avatar: const Icon(Icons.repeat_rounded,
                           size: 18, color: AppColors.gray400),
                     ),
                   ],
