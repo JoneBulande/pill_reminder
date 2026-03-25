@@ -33,10 +33,15 @@ class _AddMedicationState extends State<AddMedication> {
     if (_formKey.currentState?.validate() ?? false) {
 
       if (medicationNameController.text.isEmpty || _selectedTime == null) return;
+      
+      final hh = _selectedTime!.hour.toString().padLeft(2, '0');
+      final mm = _selectedTime!.minute.toString().padLeft(2, '0');
+      final timeString = '$hh:$mm';
+
       final medicine = Medicine(
         userName: _cachedUserName!,
         name: medicationNameController.text.trim(),
-        time: _selectedTime!.format(context),
+        time: timeString,
         intervalHours: _intervalHours,
       );
       Provider.of<MedicineProvider>(context, listen: false).addMedicine(medicine);

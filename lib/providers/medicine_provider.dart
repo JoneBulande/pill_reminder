@@ -28,20 +28,22 @@ class MedicineProvider with ChangeNotifier {
     final id = await _dbService.insertMedicine(medicine);
 
     // Agendar a notificação
-    final DateTime now = DateTime.now();
-    final DateTime scheduleTime = DateTime(
+    final now = DateTime.now();
+    final timeParts = medicine.time.split(':');
+    final scheduleTime = DateTime(
       now.year,
       now.month,
       now.day,
-      int.parse(medicine.time.split(':')[0]),
-      int.parse(medicine.time.split(':')[1]),
+      int.parse(timeParts[0]),
+      int.parse(timeParts[1]),
     );
 
     await _notificationService.scheduleNotification(
       id: id,
-      title: 'Olá ${medicine.userName}, lembrete de remédio.',
+      title: 'Lembrete de Remédio',
       body: 'Hora de tomar ${medicine.name}',
       scheduledTime: scheduleTime,
+      intervalHours: medicine.intervalHours,
     );
 
     await loadMedicines();
@@ -51,7 +53,7 @@ class MedicineProvider with ChangeNotifier {
     await _dbService.deleteMedicine(id);
 
     // Cancelar a notificação associada
-    // await flutterLocalNotificationsPlugin.cancel(id);
+    await _notificationService.cancelNotification(id);
 
     await loadMedicines();
   }

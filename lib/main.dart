@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:pill_reminder/pages/home_page.dart';
 import 'package:pill_reminder/pages/login_page.dart';
 import 'package:pill_reminder/core/ui/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pill_reminder/providers/auth_provider.dart';
 import 'package:pill_reminder/providers/medicine_provider.dart';
+import 'package:pill_reminder/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones(); // Inicialize os fusos horários
+  
+  final notificationService = NotificationService();
+  await notificationService.init();
+  await notificationService.requestPermissions();
+  
   runApp(
     MultiProvider(
       providers: [
