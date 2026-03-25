@@ -21,37 +21,32 @@ class DBService {
     return openDatabase(
       join(dbPath, 'medicine.db'),
       onCreate: (db, version) async {
-        await db.execute(
-          '''
-            CREATE TABLE users(
-              id INTEGER PRIMARY KEY,
-              username TEXT UNIQUE,
-              email TEXT UNIQUE,
-              password TEXT
-            )
-          '''
-        );
-        await db.execute(
-          '''
-            CREATE TABLE medicines (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT,
-              time TEXT,
-              intervalHours INTEGER,
-              userName TEXT
-            )
-        '''
-        );
+        await db.execute('''
+          CREATE TABLE users(
+            id       INTEGER PRIMARY KEY,
+            username TEXT UNIQUE,
+            email    TEXT UNIQUE,
+            password TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE medicines (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            name          TEXT,
+            time          TEXT,
+            intervalHours INTEGER,
+            userName      TEXT
+          )
+        ''');
       },
       version: 1,
     );
   }
 
-  // --------------------------------------------------------------------
-  // --------------------------------------------------------------------
-  // --------------------------------------------------------------------
+  // ── Auth ──────────────────────────────────────────────────────────────
 
-  Future<void> registerUser(String userName, String userEmail, String password) async {
+  Future<void> registerUser(
+      String userName, String userEmail, String password) async {
     final db = await database;
     await db.insert(
       'users',
@@ -60,7 +55,8 @@ class DBService {
     );
   }
 
-  Future<Map<String, dynamic>?> loginUser(String userEmail, String password) async {
+  Future<Map<String, dynamic>?> loginUser(
+      String userEmail, String password) async {
     final db = await database;
     final result = await db.query(
       'users',
@@ -70,9 +66,17 @@ class DBService {
     return result.isNotEmpty ? result.first : null;
   }
 
-  // --------------------------------------------------------------------
-  // --------------------------------------------------------------------
-  // --------------------------------------------------------------------
+  Future<void> updateUserPassword(String userEmail, String newPassword) async {
+    final db = await database;
+    await db.update(
+      'users',
+      {'password': newPassword},
+      where: 'email = ?',
+      whereArgs: [userEmail],
+    );
+  }
+
+  // ── Medicines ─────────────────────────────────────────────────────────
 
   Future<int> insertMedicine(Medicine medicine) async {
     final db = await database;
@@ -93,6 +97,4 @@ class DBService {
     final db = await database;
     return db.delete('medicines', where: 'id = ?', whereArgs: [id]);
   }
-
-
 }

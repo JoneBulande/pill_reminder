@@ -1,64 +1,61 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  // Singleton pattern
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
+
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  /// Emits the medicine id (as String) when a notification is tapped.
+  static final ValueNotifier<String?> selectedMedicineId =
+      ValueNotifier<String?>(null);
+
+  // ── Init ────────────────────────────────────────────────────────────
+
   Future<void> init() async {
     tz_data.initializeTimeZones();
 
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const ios = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-
-    await _notificationsPlugin.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse details) {
-        // Lógica ao clicar na notificação
+    await _plugin.initialize(
+      settings: const InitializationSettings(android: android, iOS: ios),
+      onDidReceiveNotificationResponse: (details) {
+        if (details.payload != null && details.payload!.isNotEmpty) {
+          selectedMedicineId.value = details.payload;
+        }
       },
     );
   }
 
   Future<void> requestPermissions() async {
-    // Android
-    final androidImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidImplementation != null) {
-      await androidImplementation.requestNotificationsPermission();
-      await androidImplementation.requestExactAlarmsPermission();
+    final androidImpl = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl != null) {
+      await androidImpl.requestNotificationsPermission();
+      await androidImpl.requestExactAlarmsPermission();
     }
 
-    // iOS
-    final iosImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-    if (iosImplementation != null) {
-      await iosImplementation.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+    final iosImpl = _plugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+    if (iosImpl != null) {
+      await iosImpl.requestPermissions(alert: true, badge: true, sound: true);
     }
   }
+
+  // ── Scheduling ──────────────────────────────────────────────────────
 
   Future<void> scheduleNotification({
     required int id,
@@ -67,55 +64,54 @@ class NotificationService {
     required DateTime scheduledTime,
     int? intervalHours,
   }) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       'medicine_reminder_channel',
-      'Reminders',
-      channelDescription: 'Canal para lembretes de remédio',
+      'Lembretes de Remédio',
+      channelDescription: 'Lembretes para tomar medicamentos',
       importance: Importance.high,
       priority: Priority.high,
       fullScreenIntent: true,
     );
-
-    const DarwinNotificationDetails darwinPlatformChannelSpecifics =
-        DarwinNotificationDetails(
+    const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
+    const details =
+        NotificationDetails(android: androidDetails, iOS: iosDetails);
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(
-            android: androidPlatformChannelSpecifics,
-            iOS: darwinPlatformChannelSpecifics,
-        );
-
-    final int intervals = (intervalHours != null && intervalHours > 0) ? (24 ~/ intervalHours) : 1;
+    final intervals = (intervalHours != null && intervalHours > 0)
+        ? (24 ~/ intervalHours)
+        : 1;
+    final payload = id.toString();
 
     for (int i = 0; i < intervals; i++) {
-        final currentScheduledTime = scheduledTime.add(Duration(hours: i * (intervalHours ?? 24)));
-        final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(currentScheduledTime, tz.local);
-        
-        await _notificationsPlugin.zonedSchedule(
-          id: id * 100 + i, // Evita colisão entre diferentes medicamentos e seus intervalos
-          title: title,
-          body: body,
-          scheduledDate: tzScheduledTime,
-          notificationDetails: platformChannelSpecifics,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.time,
-        );
+      final scheduled =
+          scheduledTime.add(Duration(hours: i * (intervalHours ?? 24)));
+      final tzScheduled = tz.TZDateTime.from(scheduled, tz.local);
+
+      await _plugin.zonedSchedule(
+        id: id * 100 + i,
+        title: title,
+        body: body,
+        scheduledDate: tzScheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: payload,
+      );
     }
   }
 
+  // ── Cancel ──────────────────────────────────────────────────────────
+
+  /// Cancel all notification slots for the given medicine id.
   Future<void> cancelNotification(int id) async {
-    // Como agendamos com id * 100 + i (onde i pode ir até 5 para 4h interval), vamos cancelar os possíveis 6 slots
+    // We schedule up to 24 ÷ 4 = 6 slots maximum (4 h interval)
     for (int i = 0; i < 6; i++) {
-        await _notificationsPlugin.cancel(id: id * 100 + i);
+      await _plugin.cancel(id: id * 100 + i);
     }
   }
 
-  Future<void> cancelAllNotifications() async {
-    await _notificationsPlugin.cancelAll();
-  }
+  Future<void> cancelAllNotifications() async => _plugin.cancelAll();
 }
